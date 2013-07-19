@@ -1,13 +1,13 @@
-* PocketGuard
+# PocketGuard
 
--PocketGuard guards your chest against thieves.
+* PocketGuard guards your chest against thieves.
 
-** Command list
+## Command list
 
--/pg lock
--/pg unlock
--/pg public
--/pg info
--/pg passlock
--/pg passunlock
--/pg share
+* /pg lock (ok)
+* /pg unlock (ok)
+* /pg public (ok)
+* /pg info (ok)
+* /pg passlock
+* /pg passunlock
+* /pg share
