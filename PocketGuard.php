@@ -29,8 +29,6 @@ class PocketGuard implements Plugin
 		$this->loadDB();
 		$this->api->addHandler("player.block.touch", array($this, "eventHandler"));
 		$this->api->console->register("pg", "A set of commands PocketGuard offers", array($this, "commandHandler"));
-		$this->lock("takashi", 1, 1, 1, NORMAL_LOCK);
-		$this->unlock(1, 13, 1, "takashi");
 	}
 
 	public function eventHandler($data, $event)
