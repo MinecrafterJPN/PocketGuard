@@ -133,7 +133,7 @@ class PocketGuard implements Plugin
 	private function loadDB()
 	{
 		$this->db = new SQLite3($this->api->plugin->configPath($this) . "PocketGuard.sqlite3");
-		$this->db->query(
+		$stmt = $this->db->prepare(
 				"CREATE TABLE IF NOT EXISTS chests(
 					id INTEGER PRIMARY KEY AUTOINCREMENT,
 					owner TEXT NOT NULL,
@@ -144,20 +144,57 @@ class PocketGuard implements Plugin
 					passcode TEXT
 				)"
 		);
+		$stmt->execute();
+		$stmt->close();
+		$this->getAttribute(1, 3, 5);
+	}
+	
+	private function getIndexedResult(SQLite3Result $result)
+	{
+		if(!$result instanceof SQLite3Result) return false;
+		$ret = array();
+		while ($res = $result->fetchArray(SQLITE3_ASSOC)) {
+			$ret[] = $res;
+		}
+		return $ret;
 	}
 	
 	private function getAttribute($x, $y, $z)
 	{
-		$result = $this->db->querySingle("SELECT attribute FROM chests WHERE x = $x AND y = $y AND z = $z", true);
-		if(empty($result) or $result === false) return NOT_LOCKED;
-		else return $result['attribute'];
+		$stmt = $this->db->prepare("SELECT * FROM chests WHERE x = :x AND y = :y AND z = :z");
+		$stmt->bindValue(":x", $x);
+		$stmt->bindValue(":y", $y);
+		$stmt->bindValue(":z", $z);
+		$result = $stmt->execute();
+		if($result === false) {
+			$ret = NOT_LOCKED;
+		} else {
+			$res = $this->getIndexedResult($result);
+			$ret = $res['attribute'];
+			//print_r($res);
+			//$ret = $res[0]['attribute'];
+		}
+		$stmt->close();
+		//return $ret;
+		
+		
 	}
 
 	private function getOwner($x, $y, $z)
 	{
-		$result = $this->db->querySingle("SELECT owner FROM chests WHERE x = $x AND y = $y AND z = $z", true);
-		if(empty($result) or $result === false) return NOT_LOCKED;
-		else return $result['owner'];
+		$stmt = $this->db->prepare("SELECT owner FROM chests WHERE x = $x AND y = $y AND z = $z");
+		$stmt->bindValue(":x", $x);
+		$stmt->bindValue(":y", $y);
+		$stmt->bindValue(":z", $z);
+		$result = $stmt->execute();
+		$stmt->clear();
+		$stmt->close();
+		if($result === false) {
+			return NOT_LOCKED;
+		} else {
+			$res = $result->fetchArray(SQLITE3_ASSOC);
+			return $res['owner'];
+		}
 	}
 
 	private function lock($owner, $x, $y, $z, $attribute, $passcode = null)
