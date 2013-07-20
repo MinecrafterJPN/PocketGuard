@@ -116,7 +116,7 @@ class PocketGuard implements Plugin
 					break;
 				case "share":
 					if (isset($this->queue[$issuer->username])
-							or isset($this->shareQueue[$issuer->username])) {
+					or isset($this->shareQueue[$issuer->username])) {
 						$output .= "[PocketGuards] You still have the task to do!";
 					}
 					//$target = $args[1];
@@ -135,30 +135,29 @@ class PocketGuard implements Plugin
 		$this->db = new SQLite3($this->api->plugin->configPath($this) . "PocketGuard.sqlite3");
 		$stmt = $this->db->prepare(
 				"CREATE TABLE IF NOT EXISTS chests(
-					id INTEGER PRIMARY KEY AUTOINCREMENT,
-					owner TEXT NOT NULL,
-					x INTEGER NOT NULL,
-					y INTEGER NOT NULL,
-					z INTEGER NOT NULL,
-					attribute INTEGER NOT NULL,
-					passcode TEXT
-				)"
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				owner TEXT NOT NULL,
+				x INTEGER NOT NULL,
+				y INTEGER NOT NULL,
+				z INTEGER NOT NULL,
+				attribute INTEGER NOT NULL,
+				passcode TEXT
+		)"
 		);
 		$stmt->execute();
 		$stmt->close();
-		$this->getAttribute(1, 3, 5);
 	}
-	
-	private function getIndexedResult(SQLite3Result $result)
+
+	private function getIndexedArray($ar = array())
 	{
-		if(!$result instanceof SQLite3Result) return false;
+		if(!is_array($ar)) return false;
 		$ret = array();
-		while ($res = $result->fetchArray(SQLITE3_ASSOC)) {
+		while ($res = $ar) {
 			$ret[] = $res;
 		}
 		return $ret;
 	}
-	
+
 	private function getAttribute($x, $y, $z)
 	{
 		$stmt = $this->db->prepare("SELECT * FROM chests WHERE x = :x AND y = :y AND z = :z");
@@ -166,18 +165,14 @@ class PocketGuard implements Plugin
 		$stmt->bindValue(":y", $y);
 		$stmt->bindValue(":z", $z);
 		$result = $stmt->execute();
-		if($result === false) {
+		if ($result === false) {
 			$ret = NOT_LOCKED;
 		} else {
-			$res = $this->getIndexedResult($result);
-			$ret = $res['attribute'];
-			//print_r($res);
-			//$ret = $res[0]['attribute'];
+			$res = $this->getIndexedArray($result->fetchArray(SQLITE3_ASSOC));
+			$ret = $res[0]['attribute'];
 		}
 		$stmt->close();
-		//return $ret;
-		
-		
+		return $ret;
 	}
 
 	private function getOwner($x, $y, $z)
@@ -187,14 +182,14 @@ class PocketGuard implements Plugin
 		$stmt->bindValue(":y", $y);
 		$stmt->bindValue(":z", $z);
 		$result = $stmt->execute();
-		$stmt->clear();
-		$stmt->close();
-		if($result === false) {
-			return NOT_LOCKED;
+		if ($result === false) {
+			$ret = NOT_LOCKED;
 		} else {
-			$res = $result->fetchArray(SQLITE3_ASSOC);
-			return $res['owner'];
+			$res = $this->getIndexedArray($result->fetchArray(SQLITE3_ASSOC));
+			$ret = $res[0]['owner'];
 		}
+		$stmt->close();
+		return $ret;
 	}
 
 	private function lock($owner, $x, $y, $z, $attribute, $passcode = null)
@@ -207,14 +202,18 @@ class PocketGuard implements Plugin
 		$stmt->bindValue(":attribute", $attribute);
 		$stmt->bindValue(":passcode", $passcode);
 		$stmt->execute();
-		$stmt->clear();
 		$stmt->close();
 		$this->api->chat->sendTo(false, "[PocketGuard] Completed to lock.", $owner);
 	}
 
 	private function unlock($x, $y, $z, $username)
 	{
-		$this->db->query("DELETE FROM chests WHERE x = $x AND y = $y AND z = $z");
+		$stmt = $this->db->prepare("DELETE FROM chests WHERE x = :x AND y = :y AND z = :z");
+		$stmt->bindValue(":x", $x);
+		$stmt->bindValue(":y", $y);
+		$stmt->bindValue(":z", $z);
+		$stmt->execute();
+		$stmt->close();
 		$this->api->chat->sendTo(false, "[PocketGuard] Completed to unlock.", $username);
 	}
 
@@ -224,17 +223,22 @@ class PocketGuard implements Plugin
 		$stmt->bindValue(":x", $x);
 		$stmt->bindValue(":y", $y);
 		$stmt->bindValue(":z", $z);
-		$result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
-		while ($res = $result) {
-			console($res['owner']);
+		$result = $stmt->execute();
+		$res = $this->getIndexedArray($result->fetchArray(SQLITE3_ASSOC));
+		$owner = $res[0]['owner'];
+		$attribute = $res[0]['attribute'];
+		switch ($attribute) {
+			case NORMAL_LOCK:
+				$lockType = "Normal";
+				break;
+			case PASSCODE_LOCK:
+				$lockType = "Passcode";
+				break;
+			case PUBLIC_LOCK:
+				$lockType = "Public";
+				break;
 		}
-		
-		$owner = $result['owner'];
-		if ($result['attribute'] === PASSCODE_LOCK) {
-			$this->api->chat->sendTo(false, "[PocketGuard] Owner:$owner Passcode:Off", $username);
-		} else {
-			$this->api->chat->sendTo(false, "[PocketGuard] Owner:$owner Passcode:On", $username);
-		}
+		$this->api->chat->sendTo(false, "[PocketGuard] Owner:$owner LockType:$lockType", $username);
 	}
 
 	public function __destruct()
