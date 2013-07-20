@@ -29,6 +29,7 @@ class PocketGuard implements Plugin
 		$this->loadDB();
 		$this->api->addHandler("player.block.touch", array($this, "eventHandler"));
 		$this->api->console->register("pg", "A set of commands PocketGuard offers", array($this, "commandHandler"));
+		$this->getOwner(1, 1, 1);
 	}
 
 	public function eventHandler($data, $event)
@@ -164,11 +165,11 @@ class PocketGuard implements Plugin
 		$stmt->bindValue(":x", $x);
 		$stmt->bindValue(":y", $y);
 		$stmt->bindValue(":z", $z);
-		$result = $stmt->execute();
+		$result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
 		if ($result === false) {
 			$ret = NOT_LOCKED;
 		} else {
-			$res = $this->getIndexedArray($result->fetchArray(SQLITE3_ASSOC));
+			$res = $this->getIndexedArray($result);
 			$ret = $res[0]['attribute'];
 		}
 		$stmt->close();
@@ -181,11 +182,11 @@ class PocketGuard implements Plugin
 		$stmt->bindValue(":x", $x);
 		$stmt->bindValue(":y", $y);
 		$stmt->bindValue(":z", $z);
-		$result = $stmt->execute();
+		$result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
 		if ($result === false) {
 			$ret = NOT_LOCKED;
 		} else {
-			$res = $this->getIndexedArray($result->fetchArray(SQLITE3_ASSOC));
+			$res = $this->getIndexedArray($result);
 			$ret = $res[0]['owner'];
 		}
 		$stmt->close();
@@ -223,8 +224,8 @@ class PocketGuard implements Plugin
 		$stmt->bindValue(":x", $x);
 		$stmt->bindValue(":y", $y);
 		$stmt->bindValue(":z", $z);
-		$result = $stmt->execute();
-		$res = $this->getIndexedArray($result->fetchArray(SQLITE3_ASSOC));
+		$result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+		$res = $this->getIndexedArray($result);
 		$owner = $res[0]['owner'];
 		$attribute = $res[0]['attribute'];
 		switch ($attribute) {
