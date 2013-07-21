@@ -4,7 +4,7 @@
  __PocketMine Plugin__
 name=PocketGuard
 description=PocketGuard guards your chest against thieves.
-version=alpha
+version=beta
 author=MinecrafterJPN
 class=PocketGuard
 apiversion=9
@@ -107,8 +107,6 @@ class PocketGuard implements Plugin
 				} else {
 					$this->api->chat->sendTo(false, "[PocketGuard] OK.", $username);
 				}
-				//Debug↓
-				return false;
 			}
 		}
 	}
