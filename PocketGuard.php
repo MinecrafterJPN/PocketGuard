@@ -168,17 +168,6 @@ class PocketGuard implements Plugin
 		$stmt->close();
 	}
 
-	private function getIndexedArray($ar)
-	{
-		//This function returns only 'value' (not including 'key')
-		if(!is_array($ar)) return false;
-		$ret = array();
-		foreach ($ar as $val) {
-			$ret[] = $val;
-		}
-		return $ret;
-	}
-
 	private function getAttribute($x, $y, $z)
 	{
 		$stmt = $this->db->prepare("SELECT attribute FROM chests WHERE x = :x AND y = :y AND z = :z");
@@ -186,13 +175,12 @@ class PocketGuard implements Plugin
 		$stmt->bindValue(":y", $y);
 		$stmt->bindValue(":z", $z);
 		$result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+		$stmt->close();
 		if ($result === false) {
 			$ret = NOT_LOCKED;
 		} else {
-			$res = $this->getIndexedArray($result);
-			$ret = $res[0];
-		}
-		$stmt->close();
+			$ret = $result['attribute'];
+		}		
 		return $ret;
 	}
 
@@ -203,12 +191,12 @@ class PocketGuard implements Plugin
 		$stmt->bindValue(":y", $y);
 		$stmt->bindValue(":z", $z);
 		$result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+		print_r($result);
 		$stmt->close();
 		if ($result === false) {
 			$ret = NOT_LOCKED;
 		} else {
-			$res = $this->getIndexedArray($result);
-			$ret = $res[0];
+			$ret = $result['owner'];
 		}
 		return $ret;
 	}
@@ -260,9 +248,9 @@ class PocketGuard implements Plugin
 		$stmt->bindValue(":y", $y);
 		$stmt->bindValue(":z", $z);
 		$result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
-		$res = $this->getIndexedArray($result);
-		$owner = $res[0]['owner'];
-		$attribute = $res[0]['attribute'];
+		$stmt->close();
+		$owner = $result['owner'];
+		$attribute = $result['attribute'];
 		switch ($attribute) {
 			case NORMAL_LOCK:
 				$lockType = "Normal";
