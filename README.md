@@ -4,10 +4,10 @@
 
 ## Command list
 
-* /pg lock (ok)
-* /pg unlock (ok)
-* /pg public (ok)
-* /pg info (ok)
+* /pg lock
+* /pg unlock
+* /pg public
+* /pg info
 * /pg passlock
 * /pg passunlock
 * /pg share
