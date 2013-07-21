@@ -125,11 +125,11 @@ class PocketGuard implements Plugin
 				case "passlock":
 				case "passunlock":
 					$passcode = $args[1];
-					$this->queue[$issuer->username] = array("$subCmd", $passcode);
+					$this->queue[$issuer->username] = array($subCmd, $passcode);
 					break;
 				case "share":
 					$target = $args[1];
-					$this->queue[$issuer->username] = array("$subCmd", $target);
+					$this->queue[$issuer->username] = array($subCmd, $target);
 					break;
 				default:
 					$output .= "[PocketGuards] Such command dose not exist!";
