@@ -224,7 +224,11 @@ class PocketGuard implements Plugin
 		$stmt->bindValue(":passcode", $passcode);
 		$stmt->execute();
 		$stmt->close();
-		$this->api->chat->sendTo(false, "[PocketGuard] Completed to lock.", $owner);
+		if ($attribute = PASSCODE_LOCK) {
+			$this->api->chat->sendTo(false, "[PocketGuard] Completed to lock. Passcode:$passcode", $owner);
+		} else {
+			$this->api->chat->sendTo(false, "[PocketGuard] Completed to lock.", $owner);
+		}
 	}
 
 	private function unlock($x, $y, $z, $username)
