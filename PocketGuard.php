@@ -38,8 +38,8 @@ class PocketGuard implements Plugin
 			$owner = $this->getOwner($data['target']->x, $data['target']->y, $data['target']->z);
 			$attribute = $this->getAttribute($data['target']->x, $data['target']->y, $data['target']->z);
 			if (isset($this->queue[$username])) {
-				$task = $this->queue[$username][0];
-				switch ($task) {
+				$task = $this->queue[$username];
+				switch ($task[0]) {
 					case "lock":
 						if ($owner === NOT_LOCKED) {
 							$this->lock($username, $data['target']->x, $data['target']->y, $data['target']->z, NORMAL_LOCK);
@@ -72,12 +72,15 @@ class PocketGuard implements Plugin
 						}
 						break;
 					case "passlock":
-						//passlock
-						$this->lock($username, $data['target']->x, $data['target']->y, $data['target']->z, PASSCODE_LOCK, $this->passlockQueue[$username]);
+						if ($owner === NOT_LOCKED) {
+							$this->lock($username, $data['target']->x, $data['target']->y, $data['target']->z, PASSCODE_LOCK, $task[1]);
+						} else {
+							$this->api->chat->sendTo(false, "[PocketGuard] That chest has already been guarded by other player.", $username);
+						}
 						break;
 					case "passunlock":
 						if ($attribute === PASSCODE_LOCK) {
-							if ($this->checkPasscode($data['target']->x, $data['target']->y, $data['target']->z, $this->passunlockQueue[$username])) {
+							if ($this->checkPasscode($data['target']->x, $data['target']->y, $data['target']->z, $task[1])) {
 								$this->unlock($data['target']->x, $data['target']->y, $data['target']->z, $username);
 							} else {
 								$this->api->chat->sendTo(false, "[PocketGuard] Failed to unlock because of the wrong passcode.", $username);
@@ -87,12 +90,12 @@ class PocketGuard implements Plugin
 						}
 						break;
 					case "share":
-						$target = $this->queue[$username][1];
+						$target = $task[1];
 						break;
 				}
 				unset($this->queue[$username]);
 				return false;
-			} elseif ($owner !== $username and ($attribute !== PUBLIC_LOCK and $attribute !== NOT_LOCKED)) {
+			} elseif ($owner !== $username and $attribute !== PUBLIC_LOCK and $attribute !== NOT_LOCKED) {
 				$this->api->chat->sendTo(false, "[PocketGuard] That chest has been guarded.", $username);
 				return false;
 			} else {
