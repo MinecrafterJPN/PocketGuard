@@ -117,10 +117,7 @@ class PocketGuard implements Plugin
 		$output = "";
 		if ($issuer === 'console') {
 			$output .= "[PocketGuard] Must be run on the world.";
-		} elseif(isset($this->queue[$issuer->username])
-				or isset($this->shareQueue[$issuer->username])
-				or isset($this->passlockQueue[$issuer->username])
-				or isset($this->passunlockQueue[$issuer->username])) {
+		} elseif(isset($this->queue[$issuer->username])) {
 			$output .= "[PocketGuards] You still have the task to do!";
 		} else {
 			switch ($subCmd) {
