@@ -99,7 +99,14 @@ class PocketGuard implements Plugin
 				$this->api->chat->sendTo(false, "[PocketGuard] That chest has been guarded.", $username);
 				return false;
 			} else {
-				$this->api->chat->sendTo(false, "[PocketGuard] OK.", $username);
+				if ($data['type'] === 'break' and $attribute !== NOT_LOCKED) {
+					$this->unlock($data['target']->x, $data['target']->y, $data['target']->z, $username);
+				} elseif ($owner !== $username and $data['type'] === 'break' and $attribute === PUBLIC_LOCK) {
+					$this->api->chat->sendTo(false, "[PocketGuard] The player who is not owner cannot break public chest.", $username);
+					return false;
+				} else {
+					$this->api->chat->sendTo(false, "[PocketGuard] OK.", $username);
+				}
 				//Debug↓
 				return false;
 			}
@@ -161,19 +168,20 @@ class PocketGuard implements Plugin
 		$stmt->close();
 	}
 
-	private function getIndexedArray($ar = array())
+	private function getIndexedArray($ar)
 	{
+		//This function returns only 'value' (not including 'key')
 		if(!is_array($ar)) return false;
 		$ret = array();
-		while ($res = $ar) {
-			$ret[] = $res;
+		foreach ($ar as $val) {
+			$ret[] = $val;
 		}
 		return $ret;
 	}
 
 	private function getAttribute($x, $y, $z)
 	{
-		$stmt = $this->db->prepare("SELECT * FROM chests WHERE x = :x AND y = :y AND z = :z");
+		$stmt = $this->db->prepare("SELECT attribute FROM chests WHERE x = :x AND y = :y AND z = :z");
 		$stmt->bindValue(":x", $x);
 		$stmt->bindValue(":y", $y);
 		$stmt->bindValue(":z", $z);
@@ -182,7 +190,7 @@ class PocketGuard implements Plugin
 			$ret = NOT_LOCKED;
 		} else {
 			$res = $this->getIndexedArray($result);
-			$ret = $res[0]['attribute'];
+			$ret = $res[0];
 		}
 		$stmt->close();
 		return $ret;
@@ -195,13 +203,13 @@ class PocketGuard implements Plugin
 		$stmt->bindValue(":y", $y);
 		$stmt->bindValue(":z", $z);
 		$result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+		$stmt->close();
 		if ($result === false) {
 			$ret = NOT_LOCKED;
 		} else {
 			$res = $this->getIndexedArray($result);
-			$ret = $res[0]['owner'];
+			$ret = $res[0];
 		}
-		$stmt->close();
 		return $ret;
 	}
 
