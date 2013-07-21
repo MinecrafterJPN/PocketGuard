@@ -48,13 +48,13 @@ class PocketGuard implements Plugin
 						}
 						break;
 					case "unlock":
-						if ($owner === $username) {
+						if ($owner === $username and $attribute === NORMAL_LOCK) {
 							$this->unlock($data['target']->x, $data['target']->y, $data['target']->z, $username);
 						}
 						elseif ($owner === NOT_LOCKED) {
 							$this->api->chat->sendTo(false, "[PocketGuard] That chest is not guarded.", $username);
 						} else {
-							$this->api->chat->sendTo(false, "[PocketGuard] That chest has been guarded by other player.", $username);
+							$this->api->chat->sendTo(false, "[PocketGuard] That chest has been guarded by other player or by other method.", $username);
 						}
 						break;
 					case "public":
@@ -90,7 +90,7 @@ class PocketGuard implements Plugin
 						}
 						break;
 					case "share":
-						$target = $task[1];
+						//Unimplemented
 						break;
 				}
 				unset($this->queue[$username]);
