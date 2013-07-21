@@ -99,7 +99,7 @@ class PocketGuard implements Plugin
 				$this->api->chat->sendTo(false, "[PocketGuard] That chest has been guarded.", $username);
 				return false;
 			} else {
-				if ($data['type'] === 'break' and $attribute !== NOT_LOCKED) {
+				if ($owner === $username and $data['type'] === 'break' and $attribute !== NOT_LOCKED) {
 					$this->unlock($data['target']->x, $data['target']->y, $data['target']->z, $username);
 				} elseif ($owner !== $username and $data['type'] === 'break' and $attribute === PUBLIC_LOCK) {
 					$this->api->chat->sendTo(false, "[PocketGuard] The player who is not owner cannot break public chest.", $username);
