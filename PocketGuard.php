@@ -17,7 +17,7 @@ define("PUBLIC_LOCK", 2);
 
 class PocketGuard implements Plugin
 {
-	private $api, $db, $queue = array(), $shareQueue = array(), $passlockQueue = array(), $passunlockQueue = array();
+	private $api, $db, $queue = array();
 
 	public function __construct(ServerAPI $api, $server = false)
 	{
@@ -38,7 +38,7 @@ class PocketGuard implements Plugin
 			$owner = $this->getOwner($data['target']->x, $data['target']->y, $data['target']->z);
 			$attribute = $this->getAttribute($data['target']->x, $data['target']->y, $data['target']->z);
 			if (isset($this->queue[$username])) {
-				$task = $this->queue[$username];
+				$task = $this->queue[$username][0];
 				switch ($task) {
 					case "lock":
 						if ($owner === NOT_LOCKED) {
@@ -71,24 +71,27 @@ class PocketGuard implements Plugin
 							$this->api->chat->sendTo(false, "[PocketGuard] That chest is not guarded.", $username);
 						}
 						break;
+					case "passlock":
+						//passlock
+						$this->lock($username, $data['target']->x, $data['target']->y, $data['target']->z, PASSCODE_LOCK, $this->passlockQueue[$username]);
+						break;
+					case "passunlock":
+						if ($attribute === PASSCODE_LOCK) {
+							if ($this->checkPasscode($data['target']->x, $data['target']->y, $data['target']->z, $this->passunlockQueue[$username])) {
+								$this->unlock($data['target']->x, $data['target']->y, $data['target']->z, $username);
+							} else {
+								$this->api->chat->sendTo(false, "[PocketGuard] Failed to unlock because of the wrong passcode.", $username);
+							}
+						} else {
+							$this->api->chat->sendTo(false, "[PocketGuard] That chest is not guarded by passcode.", $username);
+						}
+						break;
+					case "share":
+						$target = $this->queue[$username][1];
+						break;
 				}
 				unset($this->queue[$username]);
 				return false;
-			} elseif (isset($this->passlockQueue[$username])) {
-				//passlock
-				$this->lock($username, $data['target']->x, $data['target']->y, $data['target']->z, PASSCODE_LOCK, $this->passlockQueue[$username]);
-			} elseif (isset($this->passunlockQueue[$username])) {
-				if ($attribute === PASSCODE_LOCK) {
-					if ($this->checkPasscode($data['target']->x, $data['target']->y, $data['target']->z, $this->passunlockQueue[$username])) {
-						$this->unlock($data['target']->x, $data['target']->y, $data['target']->z, $username);
-					} else {
-						$this->api->chat->sendTo(false, "[PocketGuard] Failed to unlock because of the wrong passcode.", $username);
-					}					
-				} else {
-					$this->api->chat->sendTo(false, "[PocketGuard] That chest is not guarded by passcode.", $username);
-				}
-			} elseif (isset($this->shareQueue[$username])) {
-				$target = $this->queue[$username];
 			} elseif ($owner !== $username and ($attribute !== PUBLIC_LOCK and $attribute !== NOT_LOCKED)) {
 				$this->api->chat->sendTo(false, "[PocketGuard] That chest has been guarded.", $username);
 				return false;
@@ -117,19 +120,16 @@ class PocketGuard implements Plugin
 				case "unlock":
 				case "public":
 				case "info":
-					$this->queue[$issuer->username] = $subCmd;
+					$this->queue[$issuer->username] = array($subCmd);
 					break;
 				case "passlock":
-					$passcode = $args[1];
-					$this->passlockQueue[$issuer->username] = $passcode;
-					break;
 				case "passunlock":
 					$passcode = $args[1];
-					$this->passunlockQueue[$issuer->username] = $passcode;
+					$this->queue[$issuer->username] = array("$subCmd", $passcode);
 					break;
 				case "share":
-					//$target = $args[1];
-					//$this->shareQueue[$issuer->username] = $target;
+					$target = $args[1];
+					$this->queue[$issuer->username] = array("$subCmd", $target);
 					break;
 				default:
 					$output .= "[PocketGuards] Such command dose not exist!";
