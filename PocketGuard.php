@@ -191,7 +191,6 @@ class PocketGuard implements Plugin
 		$stmt->bindValue(":y", $y);
 		$stmt->bindValue(":z", $z);
 		$result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
-		print_r($result);
 		$stmt->close();
 		if ($result === false) {
 			$ret = NOT_LOCKED;
