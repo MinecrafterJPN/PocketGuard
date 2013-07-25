@@ -90,7 +90,6 @@ class PocketGuard implements Plugin
 						}
 						break;
 					case "share":
-						//Unimplemented
 						break;
 				}
 				unset($this->queue[$username]);
@@ -104,8 +103,6 @@ class PocketGuard implements Plugin
 				} elseif ($owner !== $username and $data['type'] === 'break' and $attribute === PUBLIC_LOCK) {
 					$this->api->chat->sendTo(false, "[PocketGuard] The player who is not owner cannot break public chest.", $username);
 					return false;
-				} else {
-					$this->api->chat->sendTo(false, "[PocketGuard] OK.", $username);
 				}
 			}
 		}
