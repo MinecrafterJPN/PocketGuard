@@ -10,14 +10,14 @@ class=PocketGuard
 apiversion=9
 */
 
-define("NOT_LOCKED", -1);
-define("NORMAL_LOCK", 0);
-define("PASSCODE_LOCK", 1);
-define("PUBLIC_LOCK", 2);
-
 class PocketGuard implements Plugin
 {
 	private $api, $db, $queue = array();
+	
+	const NOT_LOCKED = -1;
+	const NORMAL_LOCK = 0;
+	const PASSCODE_LOCK = 1;
+	const PUBLIC_LOCK = 2;
 
 	public function __construct(ServerAPI $api, $server = false)
 	{
@@ -41,45 +41,45 @@ class PocketGuard implements Plugin
 				$task = $this->queue[$username];
 				switch ($task[0]) {
 					case "lock":
-						if ($owner === NOT_LOCKED) {
-							$this->lock($username, $data['target']->x, $data['target']->y, $data['target']->z, NORMAL_LOCK);
+						if ($owner === self::NOT_LOCKED) {
+							$this->lock($username, $data['target']->x, $data['target']->y, $data['target']->z, self::NORMAL_LOCK);
 						} else {
 							$this->api->chat->sendTo(false, "[PocketGuard] That chest has already been guarded by other player.", $username);
 						}
 						break;
 					case "unlock":
-						if ($owner === $username and $attribute === NORMAL_LOCK) {
+						if ($owner === $username and $attribute === self::NORMAL_LOCK) {
 							$this->unlock($data['target']->x, $data['target']->y, $data['target']->z, $username);
 						}
-						elseif ($owner === NOT_LOCKED) {
+						elseif ($owner === self::NOT_LOCKED) {
 							$this->api->chat->sendTo(false, "[PocketGuard] That chest is not guarded.", $username);
 						} else {
 							$this->api->chat->sendTo(false, "[PocketGuard] That chest has been guarded by other player or by other method.", $username);
 						}
 						break;
 					case "public":
-						if ($owner === NOT_LOCKED) {
-							$this->lock($username, $data['target']->x, $data['target']->y, $data['target']->z, PUBLIC_LOCK);
+						if ($owner === self::NOT_LOCKED) {
+							$this->lock($username, $data['target']->x, $data['target']->y, $data['target']->z, self::PUBLIC_LOCK);
 						} else {
 							$this->api->chat->sendTo(false, "[PocketGuard] That chest has already been guarded by other player.", $username);
 						}
 						break;
 					case "info":
-						if ($owner !== NOT_LOCKED) {
+						if ($owner !== self::NOT_LOCKED) {
 							$this->info($data['target']->x, $data['target']->y, $data['target']->z, $username);
 						} else {
 							$this->api->chat->sendTo(false, "[PocketGuard] That chest is not guarded.", $username);
 						}
 						break;
 					case "passlock":
-						if ($owner === NOT_LOCKED) {
-							$this->lock($username, $data['target']->x, $data['target']->y, $data['target']->z, PASSCODE_LOCK, $task[1]);
+						if ($owner === self::NOT_LOCKED) {
+							$this->lock($username, $data['target']->x, $data['target']->y, $data['target']->z, self::PASSCODE_LOCK, $task[1]);
 						} else {
 							$this->api->chat->sendTo(false, "[PocketGuard] That chest has already been guarded by other player.", $username);
 						}
 						break;
 					case "passunlock":
-						if ($attribute === PASSCODE_LOCK) {
+						if ($attribute === self::PASSCODE_LOCK) {
 							if ($this->checkPasscode($data['target']->x, $data['target']->y, $data['target']->z, $task[1])) {
 								$this->unlock($data['target']->x, $data['target']->y, $data['target']->z, $username);
 							} else {
@@ -94,13 +94,13 @@ class PocketGuard implements Plugin
 				}
 				unset($this->queue[$username]);
 				return false;
-			} elseif ($owner !== $username and $attribute !== PUBLIC_LOCK and $attribute !== NOT_LOCKED) {
+			} elseif ($owner !== $username and $attribute !== self::PUBLIC_LOCK and $attribute !== self::NOT_LOCKED) {
 				$this->api->chat->sendTo(false, "[PocketGuard] That chest has been guarded.", $username);
 				return false;
 			} else {
-				if ($owner === $username and $data['type'] === 'break' and $attribute !== NOT_LOCKED) {
+				if ($owner === $username and $data['type'] === 'break' and $attribute !== self::NOT_LOCKED) {
 					$this->unlock($data['target']->x, $data['target']->y, $data['target']->z, $username);
-				} elseif ($owner !== $username and $data['type'] === 'break' and $attribute === PUBLIC_LOCK) {
+				} elseif ($owner !== $username and $data['type'] === 'break' and $attribute === self::PUBLIC_LOCK) {
 					$this->api->chat->sendTo(false, "[PocketGuard] The player who is not owner cannot break public chest.", $username);
 					return false;
 				}
@@ -169,7 +169,7 @@ class PocketGuard implements Plugin
 		$result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
 		$stmt->close();
 		if ($result === false) {
-			$ret = NOT_LOCKED;
+			$ret = self::NOT_LOCKED;
 		} else {
 			$ret = $result['attribute'];
 		}		
@@ -185,7 +185,7 @@ class PocketGuard implements Plugin
 		$result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
 		$stmt->close();
 		if ($result === false) {
-			$ret = NOT_LOCKED;
+			$ret = self::NOT_LOCKED;
 		} else {
 			$ret = $result['owner'];
 		}
@@ -203,7 +203,7 @@ class PocketGuard implements Plugin
 		$stmt->bindValue(":passcode", $passcode);
 		$stmt->execute();
 		$stmt->close();
-		if ($attribute === PASSCODE_LOCK) {
+		if ($attribute === self::PASSCODE_LOCK) {
 			$this->api->chat->sendTo(false, "[PocketGuard] Completed to lock. Passcode:$passcode", $owner);
 		} else {
 			$this->api->chat->sendTo(false, "[PocketGuard] Completed to lock.", $owner);
@@ -243,13 +243,13 @@ class PocketGuard implements Plugin
 		$owner = $result['owner'];
 		$attribute = $result['attribute'];
 		switch ($attribute) {
-			case NORMAL_LOCK:
+			case self::NORMAL_LOCK:
 				$lockType = "Normal";
 				break;
-			case PASSCODE_LOCK:
+			case self::PASSCODE_LOCK:
 				$lockType = "Passcode";
 				break;
-			case PUBLIC_LOCK:
+			case self::PUBLIC_LOCK:
 				$lockType = "Public";
 				break;
 		}
