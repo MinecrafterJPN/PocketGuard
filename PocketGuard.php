@@ -135,7 +135,7 @@ class PocketGuard implements Plugin
 					break;
 				default:
 					$output .= "[PocketGuards] Such command dose not exist!";
-					break;
+					return $output;
 			}
 			$output .= "[PocketGuards][CMD:" . $subCmd . "] Touch the target chest!";
 		}
