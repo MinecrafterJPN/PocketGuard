@@ -1,13 +1,30 @@
 # PocketGuard
 
-* PocketGuard guards your chest against thieves.
+PocketGuard guards your chest against thieves.
 
-## Command list
+# Installation
+1.  Drop it into your /plugins folder.
+2.  Restart your server.
 
-* /pg lock
-* /pg unlock
-* /pg public
-* /pg info
-* /pg passlock
-* /pg passunlock
-* /pg share
+# How to use
+
+1. Type a command
+2. Touch target chest
+
+# Chat commands
+
+| Command | Parameter | Description |
+| :-----: | :-------: | :---------: |
+| /pg lock | `None` | Lock target chest |
+| /pg unlock | `None` | Unlock target chest |
+| /pg passlock | `<passcode>` | Lock target chest by passcode |
+| /pg passunlock | `<passcode>` | Unlock target chest by passcode. |
+| /pg public | `None` | Make target chest public |
+| /pg info | `None` | Investigate the target chest |
+
+# Tips
+
+You can unlock your locked chest by just breaking
+
+
+
