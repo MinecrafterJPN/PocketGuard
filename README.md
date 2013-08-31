@@ -20,7 +20,7 @@ PocketGuard guards your chest against thieves.
 | /pg passlock | `<passcode>` | Lock target chest by passcode |
 | /pg passunlock | `<passcode>` | Unlock target chest by passcode. |
 | /pg public | `None` | Make target chest public |
-| /pg info | `None` | Investigate the target chest |
+| /pg info | `None` | Investigate target chest |
 
 # Tips
 
