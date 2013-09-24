@@ -7,13 +7,13 @@ description=PocketGuard guards your chest against thieves.
 version=1.0.1
 author=MinecrafterJPN
 class=PocketGuard
-apiversion=9
+apiversion=10
 */
 
 class PocketGuard implements Plugin
 {
 	private $api, $db, $queue = array();
-	
+
 	const NOT_LOCKED = -1;
 	const NORMAL_LOCK = 0;
 	const PASSCODE_LOCK = 1;
@@ -28,62 +28,79 @@ class PocketGuard implements Plugin
 	{
 		$this->loadDB();
 		$this->api->addHandler("player.block.touch", array($this, "eventHandler"));
-		$this->api->console->register("pg", "A set of commands PocketGuard offers", array($this, "commandHandler"));
+		$this->api->console->register("pg", "Main command of PocketGuard", array($this, "commandHandler"));
 	}
 
 	public function eventHandler($data, $event)
-	{
+	{		
+		$username = $data['player']->username;
+		if ($data['type'] === "place" and $data['item']->getID() === CHEST) {
+			$c = $this->getSideChest($data['block']);
+			if ($c !== false) {
+				$cInfo = $this->getChestInfo($c->x, $c->y, $c->z);
+				$attr = $cInfo === self::NOT_LOCKED ? $cInfo : $cInfo['attribute'];
+				if ($attr !== self::NOT_LOCKED) {
+					$this->api->chat->sendTo(false, "[PocketGuard] Cannot place chest next to locked chest.", $username);
+					return false;
+				}
+			}
+		}
 		if ($data['target']->getID() === CHEST) {
-			$username = $data['player']->username;
-			$owner = $this->getOwner($data['target']->x, $data['target']->y, $data['target']->z);
-			$attribute = $this->getAttribute($data['target']->x, $data['target']->y, $data['target']->z);
+			$chestInfo = $this->getChestInfo($data['target']->x, $data['target']->y, $data['target']->z);
+			$owner = $chestInfo === self::NOT_LOCKED ? $chestInfo : $chestInfo['owner'];
+			$attribute = $chestInfo === self::NOT_LOCKED ? $chestInfo : $chestInfo['attribute'];
+			$pairChest = $this->api->tile->get(new Position($data['target']->x, $data['target']->y, $data['target']->z, $this->api->level->getDefault()))->getPair();
 			if (isset($this->queue[$username])) {
 				$task = $this->queue[$username];
 				switch ($task[0]) {
 					case "lock":
-						if ($owner === self::NOT_LOCKED) {
+						if ($attribute === self::NOT_LOCKED) {
 							$this->lock($username, $data['target']->x, $data['target']->y, $data['target']->z, self::NORMAL_LOCK);
+							if ($pairChest !== false) $this->lock($username, $pairChest->x, $pairChest->y, $pairChest->z, self::NORMAL_LOCK);
 						} else {
-							$this->api->chat->sendTo(false, "[PocketGuard] That chest has already been guarded by other player.", $username);
+							$this->api->chat->sendTo(false, "[PocketGuard] The chest has already been guarded by other player.", $username);
 						}
 						break;
 					case "unlock":
 						if ($owner === $username and $attribute === self::NORMAL_LOCK) {
 							$this->unlock($data['target']->x, $data['target']->y, $data['target']->z, $username);
-						}
-						elseif ($owner === self::NOT_LOCKED) {
-							$this->api->chat->sendTo(false, "[PocketGuard] That chest is not guarded.", $username);
+							if ($pairChest !== false) $this->unlock($pairChest->x, $pairChest->y, $pairChest->z, $username);
+						} elseif ($attribute === self::NOT_LOCKED) {
+							$this->api->chat->sendTo(false, "[PocketGuard] The chest is not guarded.", $username);
 						} else {
-							$this->api->chat->sendTo(false, "[PocketGuard] That chest has been guarded by other player or by other method.", $username);
+							$this->api->chat->sendTo(false, "[PocketGuard] The chest has been guarded by other player or by other method.", $username);
 						}
 						break;
 					case "public":
-						if ($owner === self::NOT_LOCKED) {
+						if ($attribute === self::NOT_LOCKED) {
 							$this->lock($username, $data['target']->x, $data['target']->y, $data['target']->z, self::PUBLIC_LOCK);
+							if ($pairChest !== false) $this->lock($username, $pairChest->x, $pairChest->y, $pairChest->z, self::PUBLIC_LOCK);
 						} else {
 							$this->api->chat->sendTo(false, "[PocketGuard] That chest has already been guarded by other player.", $username);
 						}
 						break;
 					case "info":
-						if ($owner !== self::NOT_LOCKED) {
+						if ($attribute !== self::NOT_LOCKED) {
 							$this->info($data['target']->x, $data['target']->y, $data['target']->z, $username);
 						} else {
-							$this->api->chat->sendTo(false, "[PocketGuard] That chest is not guarded.", $username);
+							$this->api->chat->sendTo(false, "[PocketGuard] The chest is not guarded.", $username);
 						}
 						break;
 					case "passlock":
-						if ($owner === self::NOT_LOCKED) {
+						if ($attribute === self::NOT_LOCKED) {
 							$this->lock($username, $data['target']->x, $data['target']->y, $data['target']->z, self::PASSCODE_LOCK, $task[1]);
+							if ($pairChest !== false) $this->lock($username, $pairChest->x, $pairChest->y, $pairChest->z, self::NORMAL_LOCK, $task[1]);
 						} else {
-							$this->api->chat->sendTo(false, "[PocketGuard] That chest has already been guarded by other player.", $username);
+							$this->api->chat->sendTo(false, "[PocketGuard] The chest has already been guarded by other player.", $username);
 						}
 						break;
 					case "passunlock":
 						if ($attribute === self::PASSCODE_LOCK) {
 							if ($this->checkPasscode($data['target']->x, $data['target']->y, $data['target']->z, $task[1])) {
 								$this->unlock($data['target']->x, $data['target']->y, $data['target']->z, $username);
+								if ($pairChest !== false) $this->unlock($pairChest->x, $pairChest->y, $pairChest->z, $username);
 							} else {
-								$this->api->chat->sendTo(false, "[PocketGuard] Failed to unlock because of the wrong passcode.", $username);
+								$this->api->chat->sendTo(false, "[PocketGuard] Failed to unlock due to wrong passcode.", $username);
 							}
 						} else {
 							$this->api->chat->sendTo(false, "[PocketGuard] That chest is not guarded by passcode.", $username);
@@ -96,10 +113,12 @@ class PocketGuard implements Plugin
 				return false;
 			} elseif ($owner !== $username and $attribute !== self::PUBLIC_LOCK and $attribute !== self::NOT_LOCKED) {
 				$this->api->chat->sendTo(false, "[PocketGuard] That chest has been guarded.", $username);
+				$this->api->chat->sendTo(false, "[PocketGuard] If you want to know the detail, use /pg info", $username);
 				return false;
 			} else {
 				if ($owner === $username and $data['type'] === 'break' and $attribute !== self::NOT_LOCKED) {
 					$this->unlock($data['target']->x, $data['target']->y, $data['target']->z, $username);
+					if ($pairChest !== false) $this->unlock($pairChest->x, $pairChest->y, $pairChest->z, $username);
 				} elseif ($owner !== $username and $data['type'] === 'break' and $attribute === self::PUBLIC_LOCK) {
 					$this->api->chat->sendTo(false, "[PocketGuard] The player who is not owner cannot break public chest.", $username);
 					return false;
@@ -160,6 +179,34 @@ class PocketGuard implements Plugin
 		$stmt->close();
 	}
 
+	private function getSideChest($data)
+	{
+		$item = $data->level->getBlock(new Vector3($data->x + 1, $data->y, $data->z));
+		if ($item->getID() === CHEST) return $item;
+		$item = $data->level->getBlock(new Vector3($data->x - 1, $data->y, $data->z));
+		if ($item->getID() === CHEST) return $item;
+		$item = $data->level->getBlock(new Vector3($data->x, $data->y, $data->z + 1));
+		if ($item->getID() === CHEST) return $item;
+		$item = $data->level->getBlock(new Vector3($data->x, $data->y, $data->z - 1));
+		if ($item->getID() === CHEST) return $item;
+		return false;
+	}
+
+	private function getChestInfo($x, $y, $z)
+	{
+		$stmt = $this->db->prepare("SELECT * FROM chests WHERE x = :x AND y = :y AND z = :z");
+		$stmt->bindValue(":x", $x);
+		$stmt->bindValue(":y", $y);
+		$stmt->bindValue(":z", $z);
+		$result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+		$stmt->close();
+		if ($result === false) {
+			return self::NOT_LOCKED;
+		} else {
+			return $result;
+		}
+	}
+
 	private function getAttribute($x, $y, $z)
 	{
 		$stmt = $this->db->prepare("SELECT attribute FROM chests WHERE x = :x AND y = :y AND z = :z");
@@ -172,7 +219,7 @@ class PocketGuard implements Plugin
 			$ret = self::NOT_LOCKED;
 		} else {
 			$ret = $result['attribute'];
-		}		
+		}
 		return $ret;
 	}
 
@@ -220,7 +267,7 @@ class PocketGuard implements Plugin
 		$this->api->chat->sendTo(false, "[PocketGuard] Completed to unlock.", $username);
 		$stmt->close();
 	}
-	
+
 	private function checkPasscode($x, $y, $z, $passcode)
 	{
 		$stmt = $this->db->prepare("SELECT * FROM chests WHERE x = :x AND y = :y AND z = :z AND passcode = :passcode");
