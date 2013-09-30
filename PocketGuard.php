@@ -4,7 +4,7 @@
  __PocketMine Plugin__
 name=PocketGuard
 description=PocketGuard guards your chest against thieves.
-version=1.1
+version=1.1.1
 author=MinecrafterJPN
 class=PocketGuard
 apiversion=10
@@ -35,12 +35,12 @@ class PocketGuard implements Plugin
 	{		
 		$username = $data['player']->username;
 		if ($data['type'] === "place" and $data['item']->getID() === CHEST) {
-			$c = $this->getSideChest($data['block']);
+			$c = $this->getSideChest($data['block']->x, $data['block']->y, $data['block']->z);
 			if ($c !== false) {
 				$cInfo = $this->getChestInfo($c->x, $c->y, $c->z);
-				$attr = $cInfo === self::NOT_LOCKED ? $cInfo : $cInfo['attribute'];
-				if ($attr !== self::NOT_LOCKED) {
-					$this->api->chat->sendTo(false, "[PocketGuard] Cannot place chest next to locked chest.", $username);
+				$isLocked = $cInfo === self::NOT_LOCKED ? false : true;
+				if ($isLocked) {
+					$this->api->chat->sendTo(false, "[PocketGuard] Cannot place chest next to locked chest", $username);
 					return false;
 				}
 			}
@@ -49,7 +49,12 @@ class PocketGuard implements Plugin
 			$chestInfo = $this->getChestInfo($data['target']->x, $data['target']->y, $data['target']->z);
 			$owner = $chestInfo === self::NOT_LOCKED ? $chestInfo : $chestInfo['owner'];
 			$attribute = $chestInfo === self::NOT_LOCKED ? $chestInfo : $chestInfo['attribute'];
-			$pairChest = $this->api->tile->get(new Position($data['target']->x, $data['target']->y, $data['target']->z, $this->api->level->getDefault()))->getPair();
+			$pairChest = $this->api->tile->get(new Position($data['target']->x, $data['target']->y, $data['target']->z, $this->api->level->getDefault()));
+			if ($pairChest instanceof Tile) {
+				$pairChest = $pairChest->isPaired() ? $pairChest->getPair() : false;
+			} else {
+				$pairChest = false;
+			}			
 			if (isset($this->queue[$username])) {
 				$task = $this->queue[$username];
 				switch ($task[0]) {
@@ -179,15 +184,15 @@ class PocketGuard implements Plugin
 		$stmt->close();
 	}
 
-	private function getSideChest($data)
+	private function getSideChest($x, $y, $z)
 	{
-		$item = $data->level->getBlock(new Vector3($data->x + 1, $data->y, $data->z));
+		$item = $data->level->getBlock(new Vector3($x + 1, $y, $z));
 		if ($item->getID() === CHEST) return $item;
-		$item = $data->level->getBlock(new Vector3($data->x - 1, $data->y, $data->z));
+		$item = $data->level->getBlock(new Vector3($x - 1, $y, $z));
 		if ($item->getID() === CHEST) return $item;
-		$item = $data->level->getBlock(new Vector3($data->x, $data->y, $data->z + 1));
+		$item = $data->level->getBlock(new Vector3($x, $y, $z + 1));
 		if ($item->getID() === CHEST) return $item;
-		$item = $data->level->getBlock(new Vector3($data->x, $data->y, $data->z - 1));
+		$item = $data->level->getBlock(new Vector3($x, $y, $z - 1));
 		if ($item->getID() === CHEST) return $item;
 		return false;
 	}
