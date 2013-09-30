@@ -36,14 +36,14 @@ class PocketGuard implements Plugin
 		$username = $data['player']->username;
 		if ($data['type'] === "place" and $data['item']->getID() === CHEST) {
 			$c = $this->getSideChest($data['block']->x, $data['block']->y, $data['block']->z);
-			if ($c !== false) {
+ 			if ($c !== false) {
 				$cInfo = $this->getChestInfo($c->x, $c->y, $c->z);
 				$isLocked = $cInfo === self::NOT_LOCKED ? false : true;
 				if ($isLocked) {
 					$this->api->chat->sendTo(false, "[PocketGuard] Cannot place chest next to locked chest", $username);
 					return false;
 				}
-			}
+			} 
 		}
 		if ($data['target']->getID() === CHEST) {
 			$chestInfo = $this->getChestInfo($data['target']->x, $data['target']->y, $data['target']->z);
@@ -186,13 +186,13 @@ class PocketGuard implements Plugin
 
 	private function getSideChest($x, $y, $z)
 	{
-		$item = $data->level->getBlock(new Vector3($x + 1, $y, $z));
+		$item = $this->api->level->getDefault()->getBlock(new Vector3($x + 1, $y, $z));
 		if ($item->getID() === CHEST) return $item;
-		$item = $data->level->getBlock(new Vector3($x - 1, $y, $z));
+		$item = $this->api->level->getDefault()->getBlock(new Vector3($x - 1, $y, $z));
 		if ($item->getID() === CHEST) return $item;
-		$item = $data->level->getBlock(new Vector3($x, $y, $z + 1));
+		$item = $this->api->level->getDefault()->getBlock(new Vector3($x, $y, $z + 1));
 		if ($item->getID() === CHEST) return $item;
-		$item = $data->level->getBlock(new Vector3($x, $y, $z - 1));
+		$item = $this->api->level->getDefault()->getBlock(new Vector3($x, $y, $z - 1));
 		if ($item->getID() === CHEST) return $item;
 		return false;
 	}
