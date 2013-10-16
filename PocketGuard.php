@@ -4,7 +4,7 @@
  __PocketMine Plugin__
 name=PocketGuard
 description=PocketGuard guards your chest against thieves.
-version=1.1.1
+version=1.1.2
 author=MinecrafterJPN
 class=PocketGuard
 apiversion=10
@@ -29,6 +29,7 @@ class PocketGuard implements Plugin
 		$this->loadDB();
 		$this->api->addHandler("player.block.touch", array($this, "eventHandler"));
 		$this->api->console->register("pg", "Main command of PocketGuard", array($this, "commandHandler"));
+		$this->api->ban->cmdWhitelist("pg");
 	}
 
 	public function eventHandler($data, $event)
