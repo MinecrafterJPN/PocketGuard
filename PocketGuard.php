@@ -4,10 +4,10 @@
  __PocketMine Plugin__
 name=PocketGuard
 description=PocketGuard guards your chest against thieves.
-version=1.1.2
+version=1.2
 author=MinecrafterJPN
 class=PocketGuard
-apiversion=10
+apiversion=11
 */
 
 class PocketGuard implements Plugin
