@@ -30,7 +30,7 @@ class PocketGuard implements Plugin
 		$this->queue = array();
 		$this->api->addHandler("player.block.touch", array($this, "eventHandler"));
 		$this->api->console->register("pg", "Main command of PocketGuard", array($this, "commandHandler"));
-		$this->api->console->register("spg", "Main command of PocketGuard", array($this, "superCommandHandler"));
+		$this->api->console->register("spg", "Maintainance command of PocketGuard", array($this, "superCommandHandler"));
 		$this->api->ban->cmdWhitelist("pg");
 	}
 
@@ -150,7 +150,7 @@ class PocketGuard implements Plugin
 		if ($issuer === "console") {
 			$output .= "[PocketGuard] Must be run on the world.";
 		} elseif(isset($this->queue[$issuer->username])) {
-			$output .= "[PocketGuards] You have already had the task to do!";
+			$output .= "[PocketGuard] You have already had the task to do!";
 		} else {
 			switch ($subCmd) {
 				case "lock":
@@ -169,7 +169,7 @@ class PocketGuard implements Plugin
 					$this->queue[$issuer->username] = array($subCmd, $target);
 					break;
 				default:
-					$output .= "[PocketGuards] \"$subCmd\" command dose not exist!";
+					$output .= "[PocketGuard] \"$subCmd\" command dose not exist!";
 					return $output;
 			}
 			$output .= "[PocketGuard][CMD:" . $subCmd . "] Touch the target chest!";
