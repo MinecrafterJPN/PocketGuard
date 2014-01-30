@@ -11,7 +11,7 @@ PocketGuard guards your chest against thieves.
 1. Type a command
 2. Touch target chest
 
-# Console
+# Console and OP Player commands
 
 | Command | Parameter | Description |
 | :-----: | :-------: | :---------: |
