@@ -148,10 +148,7 @@ class PocketGuard implements Plugin
 		$subCmd = strtolower($args[0]);
 		$output = "";
 		if ($issuer === "console") {
-			if ($subCmd === "system") {
-			} else {
-				$output .= "[PocketGuard] Must be run on the world.";
-			}
+			$output .= "[PocketGuard] Must be run on the world.";
 		} elseif(isset($this->queue[$issuer->username])) {
 			$output .= "[PocketGuards] You have already had the task to do!";
 		} else {
