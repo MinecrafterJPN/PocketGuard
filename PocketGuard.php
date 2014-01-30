@@ -37,7 +37,7 @@ class PocketGuard implements Plugin
 	public function eventHandler($data, $event)
 	{		
 		$username = $data['player']->username;
-		if ($data['type'] === "place" and $data['item']->getID() === CHEST) {
+		if (($data['type'] === "place") and ($data['item']->getID() === CHEST) and ($data['target']->getID() === CHEST)) {
 			$c = $this->getSideChest($data['block']->x, $data['block']->y, $data['block']->z);
  			if ($c !== false) {
 				$cInfo = $this->getChestInfo($c->x, $c->y, $c->z);
