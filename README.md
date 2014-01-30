@@ -11,6 +11,16 @@ PocketGuard guards your chest against thieves.
 1. Type a command
 2. Touch target chest
 
+# Console
+
+| Command | Parameter | Description |
+| :-----: | :-------: | :---------: |
+| /spg unlock all | `None` | Unlock all chests |
+| /spg unlock a | `None` | Alias of /spg unlock all |
+| /spg unlock player | `<username>` | Unlock all `<username>`'s chests |
+| /spg unlock p | `<username>` | Alias of /spg unlock player `<username>` |
+
+
 # Chat commands
 
 | Command | Parameter | Description |
