@@ -5,7 +5,6 @@ namespace MinecrafterJPN;
 use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\level\Level;
 use pocketmine\event\block\BlockBreakEvent;
-use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\Listener;
 use pocketmine\item\Item;
 use pocketmine\math\Vector3;
@@ -13,6 +12,7 @@ use pocketmine\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
+use pocketmine\tile\Chest as TileChest;
 
 class PocketGuard extends PluginBase implements Listener
 {
@@ -75,8 +75,9 @@ class PocketGuard extends PluginBase implements Listener
                         $sender->sendMessage("/pg $option dose not exist!");
                         $sender->sendMessage("/pg <lock | unlock | public | info>");
                         $sender->sendMessage("/pg <passlock | passunlock | share>");
-                        break;
+                        return true;
                 }
+                $sender->sendMessage("[" .$option."] Touch the target chest!");
                 break;
 
             case "spg":
@@ -120,29 +121,145 @@ class PocketGuard extends PluginBase implements Listener
         return false;
 	}
 
-    public function onPlayerPlaceBlock(BlockPlaceEvent $event)
+    public function onPlayerBreakBlock(BlockBreakEvent $event)
     {
-        if ($event->getBlockAgainst()->getID() === Item::CHEST) {
-            $cs = $this->getSideChest($event->getPlayer()->getLevel(), $event->getBlockAgainst()->x, $event->getBlockAgainst()->y, $event->getBlockAgainst()->z);
+        if ($event->getBlock()->getID() === Item::CHEST) {
+            $chest = $event->getBlock();
+            $owner = $this->dbManager->getOwner($chest);
+            $attribute = $this->dbManager->getAttribute($chest);
+            $pairChestTile = null;
+            if ($tile = $chest->getLevel()->getTile($chest) instanceof TileChest and $tile->isPaired()) $pairChestTile = $tile;
+            if ($owner === $event->getPlayer()->getName()) {
+                $this->dbManager->unlock($chest);
+                if ($pairChestTile instanceof TileChest) $this->dbManager->unlock($pairChestTile);
+                $event->getPlayer()->sendMessage("Completed to unlock");
+            } elseif ($owner !== $event->getPlayer()->getName() and $attribute !== self::NOT_LOCKED) {
+                $event->getPlayer()->sendMessage("The chest has been locked");
+                $event->getPlayer()->sendMessage("Try \"/pg info\" to get more info about the chest");
+                $event->setCancelled();
+            }
+        }
+    }
+
+    public function onPlayerInteract(PlayerInteractEvent $event)
+    {
+        if ($event->getItem()->getID() === Item::CHEST) {
+            $cs = $this->getSideChest($event->getPlayer()->getLevel(), $event->getBlock()->x, $event->getBlock()->y, $event->getBlock()->z);
             if (!is_null($cs)) {
                 foreach ($cs as $c) {
                     if ($this->dbManager->isLocked($c)) {
                         $event->getPlayer()->sendMessage("Cannot place a chest next to a locked chest");
                         $event->setCancelled();
+                        return;
                     }
                 }
             }
         }
-    }
+        if ($event->getBlock()->getID() === Item::CHEST) {
+            $chest = $event->getBlock();
+            $owner = $this->dbManager->getOwner($chest);
+            $attribute = $this->dbManager->getAttribute($chest);
+            $pairChestTile = null;
+            if ($tile = $chest->getLevel()->getTile($chest) instanceof TileChest and $tile->isPaired()) $pairChestTile = $tile;
+            if (isset($this->queue[$event->getPlayer()->getName()])) {
+                $task = $this->queue[$event->getPlayer()->getName()];
+                $taskName = array_shift($task);
+                switch ($taskName) {
+                    case "lock":
+                        if ($attribute !== self::NOT_LOCKED) {
+                            $this->dbManager->normalLock($chest);
+                            if ($pairChestTile instanceof TileChest) $this->dbManager->normalLock($pairChestTile);
+                            $event->getPlayer()->sendMessage("Completed to lock");
+                        } else {
+                            $event->getPlayer()->sendMessage("The chest has already been locked");
+                        }
+                        break;
 
-    public function onPlayerBreakBlock(BlockBreakEvent $event)
-    {
+                    case "unlock":
+                        if ($owner === $event->getPlayer()->getName() and $attribute === self::NORMAL_LOCK) {
+                            $this->dbManager->unlock($chest);
+                            if ($pairChestTile instanceof TileChest) $this->dbManager->unlock($pairChestTile);
+                            $event->getPlayer()->sendMessage("Completed to unlock");
+                        } else {
+                            $event->getPlayer()->sendMessage("The chest is not locked with normal lock");
+                        }
+                        break;
 
-    }
+                    case "public":
+                        if ($attribute !== self::NOT_LOCKED) {
+                            $this->dbManager->publicLock($chest);
+                            if ($pairChestTile instanceof TileChest) $this->dbManager->publicLock($pairChestTile);
+                            $event->getPlayer()->sendMessage("Completed to public lock");
+                        } else {
+                            $event->getPlayer()->sendMessage("The chest has already been locked");
+                        }
+                        break;
 
-    public function onPlayerInteract(PlayerInteractEvent $event)
-    {
+                    case "info":
+                        if ($attribute !== self::NOT_LOCKED) {
+                            $message = "Owner: $owner LockType: ";
+                            switch ($attribute) {
+                                case self::NORMAL_LOCK:
+                                    $message .= "Normal";
+                                    break;
 
+                                case self::PASSCODE_LOCK:
+                                    $message .= "Passcode";
+                                    break;
+
+                                case self::PUBLIC_LOCK:
+                                    $message .= "Public";
+                                    break;
+                            }
+                            $event->getPlayer()->sendMessage($message);
+                        } else {
+                            $event->getPlayer()->sendMessage("The chest is not locked");
+                        }
+                        break;
+
+                    case "passlock":
+                        if ($attribute === self::NOT_LOCKED) {
+                            $passcode = array_shift($task);
+                            if (is_null($passcode)) {
+                                $event->getPlayer()->sendMessage("Usage: /pg passlock <passcode>");
+                                break;
+                            }
+                            $this->dbManager->passcodeLock($chest, $passcode);
+                            if ($pairChestTile instanceof TileChest) $this->dbManager->passcodeLock($pairChestTile, $passcode);
+                            $event->getPlayer()->sendMessage("Completed to lock with passcode \"$passcode\"");
+                        }
+                        break;
+
+                    case "passunlock":
+                        if ($attribute === self::PASSCODE_LOCK) {
+                            $passcode = array_shift($task);
+                            if (is_null($passcode)) {
+                                $event->getPlayer()->sendMessage("Usage: /pg passunlock <passcode>");
+                                break;
+                            }
+                            if ($this->dbManager->checkPasscode($chest, $passcode)) {
+                                $this->dbManager->unlock($chest);
+                                if ($pairChestTile instanceof TileChest) $this->dbManager->unlock($pairChestTile);
+                                $event->getPlayer()->sendMessage("Completed to unlock");
+                            } else {
+                                $event->getPlayer()->sendMessage("Failed to unlock due to wrong passcode");
+                            }
+                        } else {
+                            $event->getPlayer()->sendMessage("The chest is not locked with passcode");
+                        }
+                        break;
+
+                    case "share":
+                        break;
+                }
+                $event->setCancelled();
+                unset($this->queue[$event->getPlayer()->getName()]);
+            } elseif($owner !== $event->getPlayer()->getName() and $attribute !== self::PUBLIC_LOCK and $attribute !== self::NOT_LOCKED) {
+                $event->getPlayer()->sendMessage("The chest has been locked");
+                $event->getPlayer()->sendMessage("Try \"/pg info\" to get more info about the chest");
+                $event->setCancelled();
+            }
+        }
     }
 
     private function getSideChest(Level $level, $x, $y, $z)

@@ -44,7 +44,58 @@ class PocketGuardDatabaseManager
      */
     public function isLocked(Position $chest)
     {
-        $result = $this->db->query("SELECT * FROM chests WHERE x = $chest->x AND y = $chest->y AND z = $chest->z");
+        $x = $chest->x;
+        $y = $chest->y;
+        $z = $chest->z;
+        $result = $this->db->query("SELECT * FROM chests WHERE x = $x AND y = $y AND z = $z");
         //TODO
+    }
+
+    public function getOwner(Position $chest)
+    {
+        $x = $chest->x;
+        $y = $chest->y;
+        $z = $chest->z;
+        $result = $this->db->query("SELECT owner FROM chests WHERE x = $x AND y = $y AND z = $z")->fetchArray(SQLITE3_ASSOC);
+        return $result === false ? null : $result['owner'];
+    }
+
+    public function getAttribute(Position $chest)
+    {
+        $x = $chest->x;
+        $y = $chest->y;
+        $z = $chest->z;
+        $result = $this->db->query("SELECT attribute FROM chests WHERE x = $x AND y = $y AND z = $z")->fetchArray(SQLITE3_ASSOC);
+        return $result === false ? null : $result['attribute'];
+    }
+
+    public function normalLock(Position $chest)
+    {
+
+    }
+
+    public function unlock(Position $chest)
+    {
+
+    }
+
+    public function publicLock(Position $chest)
+    {
+
+    }
+
+    public function passcodeLock(Position $chest, $passcode)
+    {
+
+    }
+
+    /**
+     * @param Position $chest
+     * @param $passcode
+     * @return bool
+     */
+    public function checkPasscode(Position $chest, $passcode)
+    {
+        return true;
     }
 }

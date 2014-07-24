@@ -1,20 +1,20 @@
 name: PocketGuard
-main: MinecrafterJPN/PocketGuard
+main: MinecrafterJPN\PocketGuard
 author: MinecrafterJPN
 version: 2.0
 api: [1.0.0]
 load: POSTWORLD
 description: PocketGuard guards your chest against thieves
-website: https://github.com/MinecrafterJPN/PocketGuard
+website: https://github.com/MinecrafterJPN/PocketGuard/
 commands:
  pg:
   desciption: Main command of PocketGuard
   usage: /pg <option>
   permission: pocketguard.command.pg
-  spg:
-   desciption: Maintainance command of PocketGuard
-   usage: /spg <option>
-   permission: pocketguard.command.spg
+ spg:
+  desciption: Maintainance command of PocketGuard
+  usage: /spg <option>
+  permission: pocketguard.command.spg
 permissions:
  pocketguard:
   default: op
