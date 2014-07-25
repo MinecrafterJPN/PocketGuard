@@ -12,7 +12,7 @@ use pocketmine\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
-use pocketmine\tile\Chest as TileChest;
+use pocketmine\tile\Chest;
 
 class PocketGuard extends PluginBase implements Listener
 {
@@ -64,6 +64,10 @@ class PocketGuard extends PluginBase implements Listener
                     case "passlock":
                     case "passunlock":
                         $passcode = array_shift($args);
+                        if (is_null($passcode)) {
+                            $sender->sendMessage("Usage: /pg passlock <passcode>");
+                            return true;
+                        }
                         $this->queue[$sender->getName()] = [$option, $passcode];
                         break;
                     case "share":
@@ -78,7 +82,7 @@ class PocketGuard extends PluginBase implements Listener
                         return true;
                 }
                 $sender->sendMessage("[" .$option."] Touch the target chest!");
-                break;
+                return true;
 
             case "spg":
                 $option = strtolower(array_shift($args));
@@ -128,10 +132,10 @@ class PocketGuard extends PluginBase implements Listener
             $owner = $this->dbManager->getOwner($chest);
             $attribute = $this->dbManager->getAttribute($chest);
             $pairChestTile = null;
-            if ($tile = $chest->getLevel()->getTile($chest) instanceof TileChest and $tile->isPaired()) $pairChestTile = $tile;
+            if (($tile = $chest->getLevel()->getTile($chest)) instanceof Chest and $tile->isPaired()) $pairChestTile = $tile;
             if ($owner === $event->getPlayer()->getName()) {
                 $this->dbManager->unlock($chest);
-                if ($pairChestTile instanceof TileChest) $this->dbManager->unlock($pairChestTile);
+                if ($pairChestTile instanceof Chest) $this->dbManager->unlock($pairChestTile);
                 $event->getPlayer()->sendMessage("Completed to unlock");
             } elseif ($owner !== $event->getPlayer()->getName() and $attribute !== self::NOT_LOCKED) {
                 $event->getPlayer()->sendMessage("The chest has been locked");
@@ -160,15 +164,15 @@ class PocketGuard extends PluginBase implements Listener
             $owner = $this->dbManager->getOwner($chest);
             $attribute = $this->dbManager->getAttribute($chest);
             $pairChestTile = null;
-            if ($tile = $chest->getLevel()->getTile($chest) instanceof TileChest and $tile->isPaired()) $pairChestTile = $tile;
+            if (($tile = $chest->getLevel()->getTile($chest)) instanceof Chest and $tile->isPaired()) $pairChestTile = $tile;
             if (isset($this->queue[$event->getPlayer()->getName()])) {
                 $task = $this->queue[$event->getPlayer()->getName()];
                 $taskName = array_shift($task);
                 switch ($taskName) {
                     case "lock":
-                        if ($attribute !== self::NOT_LOCKED) {
+                        if ($attribute === self::NOT_LOCKED) {
                             $this->dbManager->normalLock($chest, $event->getPlayer()->getName());
-                            if ($pairChestTile instanceof TileChest) $this->dbManager->normalLock($pairChestTile, $event->getPlayer()->getName());
+                            if ($pairChestTile instanceof Chest) $this->dbManager->normalLock($pairChestTile, $event->getPlayer()->getName());
                             $event->getPlayer()->sendMessage("Completed to lock");
                         } else {
                             $event->getPlayer()->sendMessage("The chest has already been locked");
@@ -178,7 +182,7 @@ class PocketGuard extends PluginBase implements Listener
                     case "unlock":
                         if ($owner === $event->getPlayer()->getName() and $attribute === self::NORMAL_LOCK) {
                             $this->dbManager->unlock($chest);
-                            if ($pairChestTile instanceof TileChest) $this->dbManager->unlock($pairChestTile);
+                            if ($pairChestTile instanceof Chest) $this->dbManager->unlock($pairChestTile);
                             $event->getPlayer()->sendMessage("Completed to unlock");
                         } else {
                             $event->getPlayer()->sendMessage("The chest is not locked with normal lock");
@@ -186,9 +190,9 @@ class PocketGuard extends PluginBase implements Listener
                         break;
 
                     case "public":
-                        if ($attribute !== self::NOT_LOCKED) {
+                        if ($attribute === self::NOT_LOCKED) {
                             $this->dbManager->publicLock($chest, $event->getPlayer()->getName());
-                            if ($pairChestTile instanceof TileChest) $this->dbManager->publicLock($pairChestTile, $event->getPlayer()->getName());
+                            if ($pairChestTile instanceof Chest) $this->dbManager->publicLock($pairChestTile, $event->getPlayer()->getName());
                             $event->getPlayer()->sendMessage("Completed to public lock");
                         } else {
                             $event->getPlayer()->sendMessage("The chest has already been locked");
@@ -220,26 +224,20 @@ class PocketGuard extends PluginBase implements Listener
                     case "passlock":
                         if ($attribute === self::NOT_LOCKED) {
                             $passcode = array_shift($task);
-                            if (is_null($passcode)) {
-                                $event->getPlayer()->sendMessage("Usage: /pg passlock <passcode>");
-                                break;
-                            }
                             $this->dbManager->passcodeLock($chest, $event->getPlayer()->getName(), $passcode);
-                            if ($pairChestTile instanceof TileChest) $this->dbManager->passcodeLock($pairChestTile, $event->getPlayer()->getName(), $passcode);
+                            if ($pairChestTile instanceof Chest) $this->dbManager->passcodeLock($pairChestTile, $event->getPlayer()->getName(), $passcode);
                             $event->getPlayer()->sendMessage("Completed to lock with passcode \"$passcode\"");
+                        } else {
+                            $event->getPlayer()->sendMessage("The chest has already been locked");
                         }
                         break;
 
                     case "passunlock":
                         if ($attribute === self::PASSCODE_LOCK) {
                             $passcode = array_shift($task);
-                            if (is_null($passcode)) {
-                                $event->getPlayer()->sendMessage("Usage: /pg passunlock <passcode>");
-                                break;
-                            }
                             if ($this->dbManager->checkPasscode($chest, $passcode)) {
                                 $this->dbManager->unlock($chest);
-                                if ($pairChestTile instanceof TileChest) $this->dbManager->unlock($pairChestTile);
+                                if ($pairChestTile instanceof Chest) $this->dbManager->unlock($pairChestTile);
                                 $event->getPlayer()->sendMessage("Completed to unlock");
                             } else {
                                 $event->getPlayer()->sendMessage("Failed to unlock due to wrong passcode");

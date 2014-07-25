@@ -55,7 +55,7 @@ class PocketGuardDatabaseManager
         $x = $chest->x;
         $y = $chest->y;
         $z = $chest->z;
-        $result = $this->db->query("SELECT attribute FROM chests WHERE x = $x AND y = $y AND z = $z");
+        $result = $this->db->query("SELECT attribute FROM chests WHERE x = $x AND y = $y AND z = $z")->fetchArray();
         return $result !== false;
     }
 
@@ -82,7 +82,7 @@ class PocketGuardDatabaseManager
         $y = $chest->y;
         $z = $chest->z;
         $result = $this->db->query("SELECT attribute FROM chests WHERE x = $x AND y = $y AND z = $z")->fetchArray(SQLITE3_ASSOC);
-        return $result === false ? null : $result['attribute'];
+        return $result === false ? self::NOT_LOCKED : $result['attribute'];
     }
 
     private function lock($x, $y, $z, $owner, $attribute, $passcode = "")
