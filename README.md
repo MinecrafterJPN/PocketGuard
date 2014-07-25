@@ -13,6 +13,8 @@ PocketGuard guards your chest against thieves.
 
 # Console and OP Player commands
 
+- permission: pocketguard.command.spg
+
 | Command | Parameter | Description |
 | :-----: | :-------: | :---------: |
 | /spg unlock all | `None` | Unlock all chests |
@@ -22,6 +24,8 @@ PocketGuard guards your chest against thieves.
 
 
 # Chat commands
+
+- permission: pocketguard.command.pg
 
 | Command | Parameter | Description |
 | :-----: | :-------: | :---------: |
