@@ -6,6 +6,11 @@ use pocketmine\level\Position;
 
 class PocketGuardDatabaseManager
 {
+    const NOT_LOCKED = -1;
+    const NORMAL_LOCK = 0;
+    const PASSCODE_LOCK = 1;
+    const PUBLIC_LOCK = 2;
+
     /** @var \SQLite3 */
     private $db;
 
@@ -25,6 +30,9 @@ class PocketGuardDatabaseManager
         );
     }
 
+    /**
+     *
+     */
     public function deleteAll()
     {
         $this->db->exec("DELETE FROM chests");
@@ -47,10 +55,14 @@ class PocketGuardDatabaseManager
         $x = $chest->x;
         $y = $chest->y;
         $z = $chest->z;
-        $result = $this->db->query("SELECT * FROM chests WHERE x = $x AND y = $y AND z = $z");
-        //TODO
+        $result = $this->db->query("SELECT attribute FROM chests WHERE x = $x AND y = $y AND z = $z");
+        return $result !== false;
     }
 
+    /**
+     * @param Position $chest
+     * @return null|string
+     */
     public function getOwner(Position $chest)
     {
         $x = $chest->x;
@@ -60,6 +72,10 @@ class PocketGuardDatabaseManager
         return $result === false ? null : $result['owner'];
     }
 
+    /**
+     * @param Position $chest
+     * @return null|int
+     */
     public function getAttribute(Position $chest)
     {
         $x = $chest->x;
@@ -69,24 +85,57 @@ class PocketGuardDatabaseManager
         return $result === false ? null : $result['attribute'];
     }
 
-    public function normalLock(Position $chest)
+    private function lock($x, $y, $z, $owner, $attribute, $passcode = "")
     {
-
+        $this->db->exec("INSERT INTO chests (owner, x, y, z, attribute, passcode) VALUES (\"$owner\", $x, $y, $z, $attribute, \"$passcode\")");
     }
 
+    /**
+     * @param Position $chest
+     * @param string $owner
+     */
+    public function normalLock(Position $chest, $owner)
+    {
+        $x = $chest->x;
+        $y = $chest->y;
+        $z = $chest->z;
+        $this->lock($x, $y, $z, $owner, self::NORMAL_LOCK);
+    }
+
+    /**
+     * @param Position $chest
+     */
     public function unlock(Position $chest)
     {
-
+        $x = $chest->x;
+        $y = $chest->y;
+        $z = $chest->z;
+        $this->db->exec("DELETE FROM chests WHERE x = $x AND y = $y AND z = $z");
     }
 
-    public function publicLock(Position $chest)
+    /**
+     * @param Position $chest
+     * @param string $owner
+     */
+    public function publicLock(Position $chest, $owner)
     {
-
+        $x = $chest->x;
+        $y = $chest->y;
+        $z = $chest->z;
+        $this->lock($x, $y, $z, $owner, self::PUBLIC_LOCK);
     }
 
-    public function passcodeLock(Position $chest, $passcode)
+    /**
+     * @param Position $chest
+     * @param string $owner
+     * @param string $passcode
+     */
+    public function passcodeLock(Position $chest, $owner, $passcode)
     {
-
+        $x = $chest->x;
+        $y = $chest->y;
+        $z = $chest->z;
+        $this->lock($x, $y, $z, $owner, self::PASSCODE_LOCK, $passcode);
     }
 
     /**
@@ -96,6 +145,10 @@ class PocketGuardDatabaseManager
      */
     public function checkPasscode(Position $chest, $passcode)
     {
-        return true;
+        $x = $chest->x;
+        $y = $chest->y;
+        $z = $chest->z;
+        $result = $this->db->query("SELECT passcode FROM chests WHERE x = $x AND y = $y AND z = $z")->fetchArray(SQLITE3_ASSOC);
+        return $result['passcode'] === $passcode;
     }
 }

@@ -167,8 +167,8 @@ class PocketGuard extends PluginBase implements Listener
                 switch ($taskName) {
                     case "lock":
                         if ($attribute !== self::NOT_LOCKED) {
-                            $this->dbManager->normalLock($chest);
-                            if ($pairChestTile instanceof TileChest) $this->dbManager->normalLock($pairChestTile);
+                            $this->dbManager->normalLock($chest, $event->getPlayer()->getName());
+                            if ($pairChestTile instanceof TileChest) $this->dbManager->normalLock($pairChestTile, $event->getPlayer()->getName());
                             $event->getPlayer()->sendMessage("Completed to lock");
                         } else {
                             $event->getPlayer()->sendMessage("The chest has already been locked");
@@ -187,8 +187,8 @@ class PocketGuard extends PluginBase implements Listener
 
                     case "public":
                         if ($attribute !== self::NOT_LOCKED) {
-                            $this->dbManager->publicLock($chest);
-                            if ($pairChestTile instanceof TileChest) $this->dbManager->publicLock($pairChestTile);
+                            $this->dbManager->publicLock($chest, $event->getPlayer()->getName());
+                            if ($pairChestTile instanceof TileChest) $this->dbManager->publicLock($pairChestTile, $event->getPlayer()->getName());
                             $event->getPlayer()->sendMessage("Completed to public lock");
                         } else {
                             $event->getPlayer()->sendMessage("The chest has already been locked");
@@ -224,8 +224,8 @@ class PocketGuard extends PluginBase implements Listener
                                 $event->getPlayer()->sendMessage("Usage: /pg passlock <passcode>");
                                 break;
                             }
-                            $this->dbManager->passcodeLock($chest, $passcode);
-                            if ($pairChestTile instanceof TileChest) $this->dbManager->passcodeLock($pairChestTile, $passcode);
+                            $this->dbManager->passcodeLock($chest, $event->getPlayer()->getName(), $passcode);
+                            if ($pairChestTile instanceof TileChest) $this->dbManager->passcodeLock($pairChestTile, $event->getPlayer()->getName(), $passcode);
                             $event->getPlayer()->sendMessage("Completed to lock with passcode \"$passcode\"");
                         }
                         break;
