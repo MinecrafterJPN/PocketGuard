@@ -32,6 +32,7 @@ class PocketGuard extends PluginBase implements Listener
 
 	public function onEnable()
 	{
+        @mkdir($this->getDataFolder());
         $this->dbManager = new PocketGuardDatabaseManager($this->getDataFolder());
         $this->queue = [];
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
