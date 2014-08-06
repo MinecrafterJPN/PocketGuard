@@ -27,8 +27,8 @@ class PocketGuard extends PluginBase implements Listener
     const PUBLIC_LOCK = 2;
 
     public function onLoad()
-	{
-	}
+    {
+    }
 
 	public function onEnable()
 	{
