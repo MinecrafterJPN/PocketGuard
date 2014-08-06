@@ -36,7 +36,7 @@ class PocketGuard extends PluginBase implements Listener
         $this->dbManager = new PocketGuardDatabaseManager($this->getDataFolder());
         $this->queue = [];
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
-    }
+        }
 
 	public function onDisable()
 	{
