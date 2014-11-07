@@ -145,7 +145,7 @@ class PocketGuard extends PluginBase implements Listener {
                 if ($pairChestTile instanceof Chest) $this->databaseManager->unlock($pairChestTile);
                 $this->pocketGuardLogger->log("Player:" . $event->getPlayer()->getName() . " Action:Unlock Success:True Level:{$chest->getLevel()->getName()} Coordinate:{$chest->x},{$chest->y},{$chest->z}");
                 $event->getPlayer()->sendMessage("Completed to unlock");
-            } elseif ($owner !== $event->getPlayer()->getName() and $attribute !== self::NOT_LOCKED) {
+            } elseif ($owner !== $event->getPlayer()->getName() and !$event->getPlayer()->hasPermission("pocketguard.op") and $attribute !== self::NOT_LOCKED) {
                 $event->getPlayer()->sendMessage("The chest has been locked");
                 $event->getPlayer()->sendMessage("Try \"/pg info\" to get more info about the chest");
                 $this->pocketGuardLogger->log("Player:" . $event->getPlayer()->getName() . " Action:Unlock Level:{$chest->getLevel()->getName()} Coordinate:{$chest->x},{$chest->y},{$chest->z}");
@@ -261,7 +261,7 @@ class PocketGuard extends PluginBase implements Listener {
                 }
                 $event->setCancelled();
                 unset($this->queue[$event->getPlayer()->getName()]);
-            } elseif($owner !== $event->getPlayer()->getName() and $event->getPlayer()->hasPermission("pocketguard.op") and $attribute !== self::PUBLIC_LOCK and $attribute !== self::NOT_LOCKED) {
+            } elseif($owner !== $event->getPlayer()->getName() and !$event->getPlayer()->hasPermission("pocketguard.op") and $attribute !== self::PUBLIC_LOCK and $attribute !== self::NOT_LOCKED) {
                 $event->getPlayer()->sendMessage("The chest has been locked");
                 $event->getPlayer()->sendMessage("Try \"/pg info\" to get more info about the chest");
                 $event->setCancelled();
