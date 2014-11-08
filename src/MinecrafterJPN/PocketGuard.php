@@ -17,7 +17,6 @@ use pocketmine\tile\Chest;
 class PocketGuard extends PluginBase implements Listener {
     /** @var PocketGuardDatabaseManager  */
     private $databaseManager;
-    /** @var  array */
     private $queue;
     /** @var  PocketGuardLogger */
     private $pocketGuardLogger;
@@ -37,7 +36,7 @@ class PocketGuard extends PluginBase implements Listener {
         @mkdir($this->getDataFolder());
         $this->queue = [];
         $this->pocketGuardLogger = new PocketGuardLogger($this->getDataFolder() . 'PocketGuard.log');
-        $this->databaseManager = new PocketGuardDatabaseManager($this->getDataFolder());
+        $this->databaseManager = new PocketGuardDatabaseManager($this->getDataFolder() . 'PocketGuard.sqlite3');
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
     }
 
@@ -68,8 +67,7 @@ class PocketGuard extends PluginBase implements Listener {
 
                     case "passlock":
                     case "passunlock":
-                        $passcode = array_shift($args);
-                        if (is_null($passcode)) {
+                        if (is_null($passcode = array_shift($args))) {
                             $sender->sendMessage("Usage: /pg passlock <passcode>");
                             return true;
                         }
@@ -77,7 +75,10 @@ class PocketGuard extends PluginBase implements Listener {
                         break;
 
                     case "share":
-                        $target = array_shift($args);
+                        if (is_null($target = array_shift($args))) {
+                            $sender->sendMessage("Usage: /pg share <player>");
+                            return true;
+                        }
                         $this->queue[$sender->getName()] = [$option, $target];
                         break;
 
@@ -87,7 +88,7 @@ class PocketGuard extends PluginBase implements Listener {
                         $sender->sendMessage("/pg <passlock | passunlock | share>");
                         return true;
                 }
-                $this->pocketGuardLogger->log("[" . $sender->getName() . "] /" . $command->getName() . " " . implode(" ", $args));
+                $this->pocketGuardLogger->log("[" . $sender->getName() . "] Action:Command Command:" . $command->getName() . " Args:" . implode(",", $args));
                 $sender->sendMessage("[" .$option."] Touch the target chest!");
                 return true;
 
@@ -134,46 +135,48 @@ class PocketGuard extends PluginBase implements Listener {
 	}
 
     public function onPlayerBreakBlock(BlockBreakEvent $event) {
-        if ($event->getBlock()->getID() === Item::CHEST) {
+        if ($event->getBlock()->getID() === Item::CHEST and $this->databaseManager->isLocked($event->getBlock())) {
             $chest = $event->getBlock();
             $owner = $this->databaseManager->getOwner($chest);
             $attribute = $this->databaseManager->getAttribute($chest);
             $pairChestTile = null;
-            if (($tile = $chest->getLevel()->getTile($chest)) instanceof Chest and $tile->isPaired()) $pairChestTile = $tile;
+            if (($tile = $chest->getLevel()->getTile($chest)) instanceof Chest) $pairChestTile = $tile->getPair();
             if ($owner === $event->getPlayer()->getName()) {
                 $this->databaseManager->unlock($chest);
                 if ($pairChestTile instanceof Chest) $this->databaseManager->unlock($pairChestTile);
                 $this->pocketGuardLogger->log("[" . $event->getPlayer()->getName() . "] Action:Unlock Level:{$chest->getLevel()->getName()} Coordinate:{$chest->x},{$chest->y},{$chest->z}");
                 $event->getPlayer()->sendMessage("Completed to unlock");
-            } elseif ($owner !== $event->getPlayer()->getName() and !$event->getPlayer()->hasPermission("pocketguard.op") and $attribute !== self::NOT_LOCKED) {
+            } elseif ($attribute !== self::NOT_LOCKED and $owner !== $event->getPlayer()->getName() and !$event->getPlayer()->hasPermission("pocketguard.op")) {
                 $event->getPlayer()->sendMessage("The chest has been locked");
-                $event->getPlayer()->sendMessage("Try \"/pg info\" to get more info about the chest");
+                $event->getPlayer()->sendMessage("Try \"/pg info\" out to get more info about the chest");
                 $this->pocketGuardLogger->log("[" . $event->getPlayer()->getName() . "] Action:Unlock Level:{$chest->getLevel()->getName()} Coordinate:{$chest->x},{$chest->y},{$chest->z}");
                 $event->setCancelled();
             }
         }
     }
 
-    public function onPlayerInteract(PlayerInteractEvent $event)
-    {
+    public function onPlayerInteract(PlayerInteractEvent $event) {
+        // Prohibit placing chest next to locked chest
         if ($event->getItem()->getID() === Item::CHEST) {
             $cs = $this->getSideChest($event->getPlayer()->getLevel(), $event->getBlock()->x, $event->getBlock()->y, $event->getBlock()->z);
             if (!is_null($cs)) {
                 foreach ($cs as $c) {
                     if ($this->databaseManager->isLocked($c)) {
-                        $event->getPlayer()->sendMessage("Cannot place a chest next to a locked chest");
+                        $event->getPlayer()->sendMessage("Cannot place chest next to locked chest");
                         $event->setCancelled();
                         return;
                     }
                 }
             }
         }
+
+        // Execute task
         if ($event->getBlock()->getID() === Item::CHEST) {
             $chest = $event->getBlock();
             $owner = $this->databaseManager->getOwner($chest);
             $attribute = $this->databaseManager->getAttribute($chest);
             $pairChestTile = null;
-            if (($tile = $chest->getLevel()->getTile($chest)) instanceof Chest and $tile->isPaired()) $pairChestTile = $tile;
+            if (($tile = $chest->getLevel()->getTile($chest)) instanceof Chest) $pairChestTile = $tile->getPair();
             if (isset($this->queue[$event->getPlayer()->getName()])) {
                 $task = $this->queue[$event->getPlayer()->getName()];
                 $taskName = array_shift($task);
@@ -268,7 +271,7 @@ class PocketGuard extends PluginBase implements Listener {
                 }
                 $event->setCancelled();
                 unset($this->queue[$event->getPlayer()->getName()]);
-            } elseif($owner !== $event->getPlayer()->getName() and !$event->getPlayer()->hasPermission("pocketguard.op") and $attribute !== self::PUBLIC_LOCK and $attribute !== self::NOT_LOCKED) {
+            } elseif($attribute !== self::NOT_LOCKED and $attribute !== self::PUBLIC_LOCK and $owner !== $event->getPlayer()->getName() and !$event->getPlayer()->hasPermission("pocketguard.op")) {
                 $event->getPlayer()->sendMessage("The chest has been locked");
                 $event->getPlayer()->sendMessage("Try \"/pg info\" to get more info about the chest");
                 $event->setCancelled();

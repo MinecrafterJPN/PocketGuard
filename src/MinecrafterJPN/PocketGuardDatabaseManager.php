@@ -16,7 +16,7 @@ class PocketGuardDatabaseManager
 
     public function __construct($path)
     {
-        $this->db = new \SQLite3($path . "PocketGuard.sqlite3");
+        $this->db = new \SQLite3($path);
         $this->db->exec(
             "CREATE TABLE IF NOT EXISTS chests(
             id INTEGER PRIMARY KEY AUTOINCREMENT,

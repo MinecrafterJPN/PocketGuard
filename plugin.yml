@@ -8,11 +8,11 @@ description: PocketGuard guards your chest against thieves
 website: https://github.com/MinecrafterJPN/PocketGuard/
 commands:
  pg:
-  desciption: Main command of PocketGuard
+  desciption: Lock and unlock chests
   usage: /pg <option>
   permission: pocketguard.command.pg
  spg:
-  desciption: Maintainance command of PocketGuard
+  desciption: PocketGuard command for op user
   usage: /spg <option>
   permission: pocketguard.command.spg
 permissions:
