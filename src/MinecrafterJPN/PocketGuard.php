@@ -162,7 +162,7 @@ class PocketGuard extends PluginBase implements Listener {
             $cs = $this->getSideChest($event->getPlayer()->getLevel(), $event->getBlock()->x, $event->getBlock()->y, $event->getBlock()->z);
             if (!is_null($cs)) {
                 foreach ($cs as $c) {
-                    if ($this->databaseManager->isLocked($c)) {
+                    if ($this->databaseManager->isLocked($c) && $this->databaseManager->getOwner($c) !== $event->getPlayer()->getName()) {
                         $event->getPlayer()->sendMessage("Cannot place chest next to locked chest");
                         $event->setCancelled();
                         return;
