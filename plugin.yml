@@ -1,7 +1,7 @@
 name: PocketGuard
 main: MinecrafterJPN\PocketGuard
 author: MinecrafterJPN
-version: 2.1
+version: 2.1.1
 api: [1.6.0]
 load: POSTWORLD
 description: PocketGuard guards your chest against thieves
