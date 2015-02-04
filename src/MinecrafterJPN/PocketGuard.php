@@ -2,6 +2,7 @@
 
 namespace MinecrafterJPN;
 
+use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\level\Level;
 use pocketmine\event\block\BlockBreakEvent;
@@ -155,7 +156,7 @@ class PocketGuard extends PluginBase implements Listener {
         }
     }
 
-    public function onPlayerInteract(PlayerInteractEvent $event) {
+    public function onPlayerBlockPlace(BlockPlaceEvent $event) {
         // Prohibit placing chest next to locked chest
         if ($event->getItem()->getID() === Item::CHEST) {
             $cs = $this->getSideChest($event->getPlayer()->getLevel(), $event->getBlock()->x, $event->getBlock()->y, $event->getBlock()->z);
@@ -169,7 +170,9 @@ class PocketGuard extends PluginBase implements Listener {
                 }
             }
         }
+    }
 
+    public function onPlayerInteract(PlayerInteractEvent $event) {
         // Execute task
         if ($event->getBlock()->getID() === Item::CHEST) {
             $chest = $event->getBlock();
