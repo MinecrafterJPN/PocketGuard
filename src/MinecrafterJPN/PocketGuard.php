@@ -101,7 +101,7 @@ class PocketGuard extends PluginBase implements Listener {
                         $sender->sendMessage('/pg <passlock | passunlock | share>');
                         return true;
                 }
-                $sender->sendMessage("[$option] Touch the target chest!");
+                $sender->sendMessage("[$option] Touch the target block!");
                 return true;
 
             case 'spg':
@@ -113,7 +113,7 @@ class PocketGuard extends PluginBase implements Listener {
                             case 'a':
                             case 'all':
                                 $this->databaseManager->deleteAll();
-                                $sender->sendMessage('Successfully unlocked all chests');
+                                $sender->sendMessage('Successfully unlocked all blocks');
                                 break;
 
                             case 'p':
@@ -124,7 +124,7 @@ class PocketGuard extends PluginBase implements Listener {
                                     return true;
                                 }
                                 $this->databaseManager->deletePlayerData($target);
-                                $sender->sendMessage("Successfully unlocked all $target's chests");
+                                $sender->sendMessage("Successfully unlocked all $target's blocks");
                                 break;
 
                             default:
