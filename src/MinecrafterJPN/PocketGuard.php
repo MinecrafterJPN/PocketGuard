@@ -198,7 +198,7 @@ class PocketGuard extends PluginBase implements Listener {
                             if ($pairChestTile instanceof Chest) $this->databaseManager->normalLock($pairChestTile, $event->getPlayer()->getName());
                             $event->getPlayer()->sendMessage('Successfully locked!');
                         } else {
-                            $event->getPlayer()->sendMessage('The chest has already been locked');
+                            $event->getPlayer()->sendMessage('The block has already been locked');
                         }
                         break;
 
@@ -208,7 +208,7 @@ class PocketGuard extends PluginBase implements Listener {
                             if ($pairChestTile instanceof Chest) $this->databaseManager->unlock($pairChestTile);
                             $event->getPlayer()->sendMessage('Successfully unlocked!');
                         } else {
-                            $event->getPlayer()->sendMessage('The chest is not locked with normal lock');
+                            $event->getPlayer()->sendMessage('The block is not locked with normal lock');
                         }
                         break;
 
@@ -218,7 +218,7 @@ class PocketGuard extends PluginBase implements Listener {
                             if ($pairChestTile instanceof Chest) $this->databaseManager->publicLock($pairChestTile, $event->getPlayer()->getName());
                             $event->getPlayer()->sendMessage('Successfully public lock!');
                         } else {
-                            $event->getPlayer()->sendMessage('The chest has already been locked');
+                            $event->getPlayer()->sendMessage('The block has already been locked');
                         }
                         break;
 
@@ -240,7 +240,7 @@ class PocketGuard extends PluginBase implements Listener {
                             }
                             $event->getPlayer()->sendMessage($message);
                         } else {
-                            $event->getPlayer()->sendMessage('The chest is not locked');
+                            $event->getPlayer()->sendMessage('The block is not locked');
                         }
                         break;
 
@@ -251,7 +251,7 @@ class PocketGuard extends PluginBase implements Listener {
                             if ($pairChestTile instanceof Chest) $this->databaseManager->passcodeLock($pairChestTile, $event->getPlayer()->getName(), $passcode);
                             $event->getPlayer()->sendMessage("Successfully locked with passcode \"$passcode\"!");
                         } else {
-                            $event->getPlayer()->sendMessage('The chest has already been locked');
+                            $event->getPlayer()->sendMessage('The block has already been locked');
                         }
                         break;
 
@@ -266,7 +266,7 @@ class PocketGuard extends PluginBase implements Listener {
                                 $event->getPlayer()->sendMessage('Failed to unlock due to wrong passcode');
                             }
                         } else {
-                            $event->getPlayer()->sendMessage('The chest is not locked with passcode');
+                            $event->getPlayer()->sendMessage('The block is not locked with passcode');
                         }
                         break;
 
@@ -276,8 +276,8 @@ class PocketGuard extends PluginBase implements Listener {
                 $event->setCancelled();
                 unset($this->queue[$event->getPlayer()->getName()]);
             } elseif($attribute !== self::NOT_LOCKED and $attribute !== self::PUBLIC_LOCK and $owner !== $event->getPlayer()->getName() and !$event->getPlayer()->hasPermission("pocketguard.op")) {
-                $event->getPlayer()->sendMessage('The chest has been locked');
-                $event->getPlayer()->sendMessage('Try "/pg info" to investigate the chest');
+                $event->getPlayer()->sendMessage('The block has been locked');
+                $event->getPlayer()->sendMessage('Try "/pg info" to investigate the block');
                 $event->setCancelled();
             }
         }
