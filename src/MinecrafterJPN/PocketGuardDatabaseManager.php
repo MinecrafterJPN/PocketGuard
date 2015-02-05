@@ -47,40 +47,40 @@ class PocketGuardDatabaseManager
     }
 
     /**
-     * @param Position $chest
+     * @param Position $block
      * @return bool
      */
-    public function isLocked(Position $chest)
+    public function isLocked(Position $block)
     {
-        $x = $chest->x;
-        $y = $chest->y;
-        $z = $chest->z;
+        $x = $block->x;
+        $y = $block->y;
+        $z = $block->z;
         $result = $this->db->query("SELECT attribute FROM chests WHERE x = $x AND y = $y AND z = $z")->fetchArray();
         return $result !== false;
     }
 
     /**
-     * @param Position $chest
+     * @param Position $block
      * @return null|string
      */
-    public function getOwner(Position $chest)
+    public function getOwner(Position $block)
     {
-        $x = $chest->x;
-        $y = $chest->y;
-        $z = $chest->z;
+        $x = $block->x;
+        $y = $block->y;
+        $z = $block->z;
         $result = $this->db->query("SELECT owner FROM chests WHERE x = $x AND y = $y AND z = $z")->fetchArray(SQLITE3_ASSOC);
         return $result === false ? null : $result['owner'];
     }
 
     /**
-     * @param Position $chest
+     * @param Position $block
      * @return null|int
      */
-    public function getAttribute(Position $chest)
+    public function getAttribute(Position $block)
     {
-        $x = $chest->x;
-        $y = $chest->y;
-        $z = $chest->z;
+        $x = $block->x;
+        $y = $block->y;
+        $z = $block->z;
         $result = $this->db->query("SELECT attribute FROM chests WHERE x = $x AND y = $y AND z = $z")->fetchArray(SQLITE3_ASSOC);
         return $result === false ? self::NOT_LOCKED : $result['attribute'];
     }
@@ -91,63 +91,63 @@ class PocketGuardDatabaseManager
     }
 
     /**
-     * @param Position $chest
+     * @param Position $block
      * @param string $owner
      */
-    public function normalLock(Position $chest, $owner)
+    public function normalLock(Position $block, $owner)
     {
-        $x = $chest->x;
-        $y = $chest->y;
-        $z = $chest->z;
+        $x = $block->x;
+        $y = $block->y;
+        $z = $block->z;
         $this->lock($x, $y, $z, $owner, self::NORMAL_LOCK);
     }
 
     /**
-     * @param Position $chest
+     * @param Position $block
      */
-    public function unlock(Position $chest)
+    public function unlock(Position $block)
     {
-        $x = $chest->x;
-        $y = $chest->y;
-        $z = $chest->z;
+        $x = $block->x;
+        $y = $block->y;
+        $z = $block->z;
         $this->db->exec("DELETE FROM chests WHERE x = $x AND y = $y AND z = $z");
     }
 
     /**
-     * @param Position $chest
+     * @param Position $block
      * @param string $owner
      */
-    public function publicLock(Position $chest, $owner)
+    public function publicLock(Position $block, $owner)
     {
-        $x = $chest->x;
-        $y = $chest->y;
-        $z = $chest->z;
+        $x = $block->x;
+        $y = $block->y;
+        $z = $block->z;
         $this->lock($x, $y, $z, $owner, self::PUBLIC_LOCK);
     }
 
     /**
-     * @param Position $chest
+     * @param Position $block
      * @param string $owner
      * @param string $passcode
      */
-    public function passcodeLock(Position $chest, $owner, $passcode)
+    public function passcodeLock(Position $block, $owner, $passcode)
     {
-        $x = $chest->x;
-        $y = $chest->y;
-        $z = $chest->z;
+        $x = $block->x;
+        $y = $block->y;
+        $z = $block->z;
         $this->lock($x, $y, $z, $owner, self::PASSCODE_LOCK, $passcode);
     }
 
     /**
-     * @param Position $chest
+     * @param Position $block
      * @param $passcode
      * @return bool
      */
-    public function checkPasscode(Position $chest, $passcode)
+    public function checkPasscode(Position $block, $passcode)
     {
-        $x = $chest->x;
-        $y = $chest->y;
-        $z = $chest->z;
+        $x = $block->x;
+        $y = $block->y;
+        $z = $block->z;
         $result = $this->db->query("SELECT passcode FROM chests WHERE x = $x AND y = $y AND z = $z")->fetchArray(SQLITE3_ASSOC);
         return $result['passcode'] === $passcode;
     }
