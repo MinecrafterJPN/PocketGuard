@@ -45,7 +45,7 @@ class PocketGuard extends PluginBase implements Listener {
 	{
 	}
 
-	public function onCommand(CommandSender $sender, Command $command, $label, array $args)
+	public function onCommand(CommandSender $sender, Command $command, string $label, array $args) : bool
 	{
         if (!($sender instanceof Player)) {
             $sender->sendMessage("Must be run in the world!");
